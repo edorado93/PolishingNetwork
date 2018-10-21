@@ -52,7 +52,10 @@ print("Configuration is as follows", json.dumps({"log_interval": config.log_inte
                                                  "save": args.save,
                                                  "pre_trained": config.pre_trained,
                                                  "epochs": config.n_epochs,
-                                                 "batch_size": config.batch_size},sort_keys=True, indent=4, separators=(',', ': ')))
+                                                 "batch_size": config.batch_size,
+                                                 "n-gram": config.n_gram,
+                                                 "n-layers": config.n_layers,
+                                                 "embedding size": config.em_size},sort_keys=True, indent=4, separators=(',', ': ')))
 
 # Dictionary and corpus
 dictionary = Dictionary()

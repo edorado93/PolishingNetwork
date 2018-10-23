@@ -30,7 +30,7 @@ parser.add_argument('--seed', type=int, default=1111,
 parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
 parser.add_argument('--mode', type=int,  default=0,
-                    help='train(0)/predict_sentence(1)/predict_file(2) or evaluate(3)')
+                    help='train(0)/predict_file(1)')
 parser.add_argument('--data', type=str,
                     help="Data location")
 parser.add_argument('--save', type=str,
@@ -48,6 +48,7 @@ if args.cuda:
 # Config to run
 config = Config()
 print("Configuration is as follows", json.dumps({"log_interval": config.log_interval,
+                                                 "cell": config.cell,
                                                  "learning rate": config.lr,
                                                  "save": args.save,
                                                  "pre_trained": config.pre_trained,
@@ -84,7 +85,7 @@ print('Model total parameters:', total_params, flush=True)
 
 def train(start_epoch, best_metric):
     train_loader = DataLoader(training_corpus, config.batch_size)
-    patience = 0
+    patience = config.patience
     training_loss = AverageMeter()
 
     try:
@@ -128,6 +129,12 @@ def train(start_epoch, best_metric):
 
             if validation_loss.avg >= best_metric:
                 patience -= 1
+
+                if patience == 0:
+                    print("Breaking off now. Performance has not improved on validation set since the last",
+                          config.patience, "epochs", flush=True)
+                    exit(0)
+
             else:
                 patience = config.patience
                 best_metric = validation_loss.avg
@@ -165,7 +172,7 @@ def load():
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['model'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        prev_best_metric = checkpoint['best_metric']
+        best_metric = checkpoint['best_metric']
         print("=> loaded best model with metric {}, epoch {}".format(best_metric, start_epoch), flush=True)
     else:
         print("=> no checkpoint found at '{}', starting from scratch".format(args.save), flush=True)
@@ -192,4 +199,42 @@ if __name__ == "__main__":
     start_epoch, best_metric = load()
     if args.mode == 0:
         train(start_epoch, best_metric)
+    elif args.mode == 1:
+        test_corpus = Corpus(args.data + "/test.txt", dictionary, use_cuda=args.cuda,
+                             n_gram=config.n_gram, is_test=True)
+        test_loader = DataLoader(test_corpus, config.batch_size)
+        print("Number of test samples", len(test_loader.dataset))
+        softmax = nn.Softmax(dim=1)
+        changes_made = 0
+        thinks_same = 0
+        for batch_idx, (X, Y, abstract_number, i) in enumerate(test_loader):
+            output, target = model(X, Y)
+            output = softmax(output)
+            probabilities, words = output.topk(1)
+            for org, gen, prob, ab, index in zip(Y, words, probabilities, abstract_number, i):
+                # Highly confident about the new word
+                if prob > 0.5:
+                    changes_made += (org != gen).item()
+                    thinks_same += (org == gen).item()
+                    new_word = test_corpus.dictionary.idx2word[gen.item()]
+                    test_corpus.testing[ab.item()][index.item()] = new_word
 
+        with open("polished.txt", "w") as f:
+            for abstract in test_corpus.testing:
+                if type(abstract) == int:
+
+                    original = test_corpus.testing["org"+str(abstract)]
+                    org_generated = test_corpus.testing["gen"+str(abstract)][1:-1]
+                    polished = test_corpus.testing[abstract][1:-1]
+                    differences = []
+                    for i, (w1, w2) in enumerate(zip(org_generated, polished)):
+                        if w1 != w2:
+                            differences.append((i, w1, w2))
+
+                    f.write(json.dumps({"original": " ".join(original),
+                                    "generated": " ".join(polished),
+                                    "before polishing": " ".join(org_generated),
+                                    "differences": differences}))
+                    f.write("\n")
+        print("Changes made:", changes_made)
+        print("Done!")

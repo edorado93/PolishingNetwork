@@ -50,16 +50,32 @@ class Corpus(Dataset):
     EOS = '<EOS>'
     SOS = '<SOS>'
 
-    def __init__(self, path, dictionary, min_freq=5, use_cuda=True, n_gram=5, create_dict=False, is_test=False):
+    def __init__(self, path, dictionary, min_freq=5, use_cuda=True, n_gram=5, create_dict=False, is_test=False, context_mode="default"):
         self.dictionary = dictionary
         self.min_freq = min_freq
         self.use_cuda = use_cuda
         self.data = []
         self.testing = {}
-        self.tokenize(path, n_gram, create_dict, is_test)
+        self.tokenize(path, n_gram, create_dict, is_test, context_mode)
         self.ignore_words(is_test)
 
-    def test_tokenize(self, path, n_gram):
+    def get_samples_from_words_list(self, words, n_gram, context_mode):
+        # Generate n-gram training samples
+        abstract_length = len(words)
+        samples = []
+        for i in range(0, abstract_length - n_gram):
+            if context_mode == "word2vec":
+                mid = n_gram // 2
+                X = words[i: i + mid] + words[i + mid + 1: i + n_gram]
+                Y = words[i + mid]
+            else:
+                X = words[i: i + n_gram]
+                Y = words[i + n_gram]
+            samples.append((X, Y))
+        return samples
+
+
+    def test_tokenize(self, path, n_gram, context_mode):
         with open(path, 'r') as f:
             for abstract_num, line in enumerate(f):
                 j = json.loads(line.strip())
@@ -74,16 +90,18 @@ class Corpus(Dataset):
                 self.testing["org" + str(abstract_num)] = original.split()
                 self.testing["gen" + str(abstract_num)] = list(words)
 
+                samples = self.get_samples_from_words_list(words, n_gram, context_mode)
+
                 # Generate n-gram training samples
                 abstract_length = len(words)
                 for i in range(0, abstract_length - n_gram):
-                    X = words[i: i + n_gram]
-                    Y = words[i + n_gram]
-                    self.data.append((X, Y, abstract_num, i + n_gram))
+                    X, Y = samples[i]
+                    index = i + n_gram if context_mode == "default" else i + (n_gram // 2)
+                    self.data.append((X, Y, abstract_num, index))
 
-    def tokenize(self, path, n_gram, create_dict, is_test):
+    def tokenize(self, path, n_gram, create_dict, is_test, context_mode):
         if is_test:
-            self.test_tokenize(path, n_gram)
+            self.test_tokenize(path, n_gram, context_mode)
         else:
             with open(path, 'r') as f:
                 for abstract_num, line in enumerate(f):
@@ -96,12 +114,9 @@ class Corpus(Dataset):
                     # Add SOS and EOS tokens
                     words = [Corpus.SOS] + words + [Corpus.EOS]
 
-                    # Generate n-gram training samples
-                    abstract_length = len(words)
-                    for i in range(0, abstract_length - n_gram):
-                        X = words[i : i + n_gram]
-                        Y = words[i + n_gram]
-                        self.data.append((X, Y))
+                    # Prepare samples using the words above.
+                    samples = self.get_samples_from_words_list(words, n_gram, context_mode)
+                    self.data.extend(samples)
 
     def ignore_words(self, is_test):
         updated_data = []

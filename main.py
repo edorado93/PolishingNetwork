@@ -22,7 +22,22 @@ class Config:
     max_grad_norm = 10
     log_interval = 1000
     patience = 5
-    pre_trained = 'complete-512.vec'
+    pre_trained = None#'complete-512.vec'
+    context_mode = "default"
+
+    def __repr__(self):
+        return "Configuration is as follows {}".format(json.dumps({"log_interval": config.log_interval,
+                                                 "cell": config.cell,
+                                                 "learning rate": config.lr,
+                                                 "save": args.save,
+                                                 "pre_trained": config.pre_trained,
+                                                 "epochs": config.n_epochs,
+                                                 "batch_size": config.batch_size,
+                                                 "n-gram": config.n_gram,
+                                                 "n-layers": config.n_layers,
+                                                 "embedding size": config.em_size,
+                                                 "context mode": config.context_mode},sort_keys=True, indent=4, separators=(',', ': ')))
+
 
 parser = argparse.ArgumentParser(description='polishing networks')
 parser.add_argument('--seed', type=int, default=1111,
@@ -47,16 +62,12 @@ if args.cuda:
 
 # Config to run
 config = Config()
-print("Configuration is as follows", json.dumps({"log_interval": config.log_interval,
-                                                 "cell": config.cell,
-                                                 "learning rate": config.lr,
-                                                 "save": args.save,
-                                                 "pre_trained": config.pre_trained,
-                                                 "epochs": config.n_epochs,
-                                                 "batch_size": config.batch_size,
-                                                 "n-gram": config.n_gram,
-                                                 "n-layers": config.n_layers,
-                                                 "embedding size": config.em_size},sort_keys=True, indent=4, separators=(',', ': ')))
+if os.path.isfile(args.save):
+    checkpoint = torch.load(args.save)
+    if 'config' in checkpoint:
+        print("Loading saved config")
+        config = checkpoint['config']
+print(config)
 
 # Dictionary and corpus
 dictionary = Dictionary()
@@ -160,7 +171,7 @@ def evaluate():
 
 def save(epoch, metric):
     checkpoint = {"model" : model.state_dict(), "best_metric" : metric,
-                  'optimizer': optimizer.state_dict(), 'epoch': epoch + 1}
+                  'optimizer': optimizer.state_dict(), 'epoch': epoch + 1, 'config': config}
     torch.save(checkpoint, args.save)
 
 def load():

@@ -10,8 +10,8 @@ from data import load_embeddings
 import random, os, json
 
 class Config:
-    lr = 0.0001
-    n_epochs = 20
+    lr = 0.00001
+    n_epochs = 50
     cell = "gru"
     n_gram = 5
     n_layers = 2
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     if args.mode == 0:
         train(start_epoch, best_metric)
     elif args.mode == 1:
-        test_corpus = Corpus(args.data + "/test.txt", dictionary, use_cuda=args.cuda,
+        test_corpus = Corpus(args.data + "/generated.txt", dictionary, use_cuda=args.cuda,
                              n_gram=config.n_gram, is_test=True)
         test_loader = DataLoader(test_corpus, config.batch_size)
         print("Number of test samples", len(test_loader.dataset))

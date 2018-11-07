@@ -71,8 +71,8 @@ print(config)
 
 # Dictionary and corpus
 dictionary = Dictionary()
-training_corpus = Corpus(args.data+"/train.txt", dictionary, create_dict=True, use_cuda=args.cuda, n_gram=config.n_gram)
-validation_corpus = Corpus(args.data+"/valid.txt", dictionary, create_dict=True, use_cuda=args.cuda, n_gram=config.n_gram)
+training_corpus = Corpus(args.data+"/train.txt", dictionary, create_dict=True, use_cuda=args.cuda, n_gram=config.n_gram, context_mode=config.context_mode)
+validation_corpus = Corpus(args.data+"/valid.txt", dictionary, create_dict=True, use_cuda=args.cuda, n_gram=config.n_gram, context_mode=config.context_mode)
 
 # TensorboardX object
 writer = SummaryWriter("saved_runs/" + args.save)

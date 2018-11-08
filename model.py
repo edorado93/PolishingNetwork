@@ -7,12 +7,12 @@ class LSTM_LM(nn.Module):
         self.vocab_size = embedding.num_embeddings
         if config.cell == "gru":
             self.rnn = nn.GRU(config.em_size, config.hidden_size, config.n_layers,
-                              batch_first=True, dropout=config.dropout_p)
+                              batch_first=True, dropout=config.dropout_p, bidirectional=config.bidirectional)
         else:
             self.rnn = nn.LSTM(config.em_size, config.hidden_size, config.n_layers,
-                              batch_first=True, dropout=config.dropout_p)
+                              batch_first=True, dropout=config.dropout_p, bidirectional=config.bidirectionals)
 
-        self.out = nn.Linear(config.hidden_size, self.vocab_size)
+        self.out = nn.Linear(2 * config.hidden_size if config.bidirectional else config.hidden_size, self.vocab_size)
 
     def forward(self, X, Y):
         embedded = self.embedding(X)

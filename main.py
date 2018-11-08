@@ -22,12 +22,14 @@ class Config:
     max_grad_norm = 10
     log_interval = 1000
     patience = 5
-    pre_trained = None#'complete-512.vec'
+    pre_trained = 'complete-512.vec'
     context_mode = "default"
+    bidirectional = False
 
     def __repr__(self):
         return "Configuration is as follows {}".format(json.dumps({"log_interval": config.log_interval,
                                                  "cell": config.cell,
+                                                 "bidirectional": config.bidirectional,
                                                  "learning rate": config.lr,
                                                  "save": args.save,
                                                  "pre_trained": config.pre_trained,

@@ -10,35 +10,36 @@ from data import load_embeddings
 import random, os, json
 
 class Config:
-    lr = 0.00001
-    n_epochs = 50
-    cell = "gru"
-    n_gram = 5
-    n_layers = 2
-    hidden_size = 1150
-    em_size = 512
-    dropout_p = 0
-    batch_size = 256
-    max_grad_norm = 10
-    log_interval = 1000
-    patience = 5
-    pre_trained = 'complete-512.vec'
-    context_mode = "default"
-    bidirectional = False
+    def __init__(self):
+        self.lr = 0.00001
+        self.n_epochs = 50
+        self.cell = "gru"
+        self.n_gram = 5
+        self.n_layers = 2
+        self.hidden_size = 1150
+        self.em_size = 512
+        self.dropout_p = 0
+        self.batch_size = 256
+        self.max_grad_norm = 10
+        self.log_interval = 1000
+        self.patience = 5
+        self.pre_trained = 'complete-512.vec'
+        self.context_mode = "default"
+        self.bidirectional = False
 
     def __repr__(self):
-        return "Configuration is as follows {}".format(json.dumps({"log_interval": config.log_interval,
-                                                 "cell": config.cell,
-                                                 "bidirectional": config.bidirectional,
-                                                 "learning rate": config.lr,
+        return "Configuration is as follows {}".format(json.dumps({"log_interval": self.log_interval,
+                                                 "cell": self.cell,
+                                                 "bidirectional": self.bidirectional,
+                                                 "learning rate": self.lr,
                                                  "save": args.save,
-                                                 "pre_trained": config.pre_trained,
-                                                 "epochs": config.n_epochs,
-                                                 "batch_size": config.batch_size,
-                                                 "n-gram": config.n_gram,
-                                                 "n-layers": config.n_layers,
-                                                 "embedding size": config.em_size,
-                                                 "context mode": config.context_mode},sort_keys=True, indent=4, separators=(',', ': ')))
+                                                 "pre_trained": self.pre_trained,
+                                                 "epochs": self.n_epochs,
+                                                 "batch_size": self.batch_size,
+                                                 "n-gram": self.n_gram,
+                                                 "n-layers": self.n_layers,
+                                                 "embedding size": self.em_size,
+                                                 "context mode": self.context_mode},sort_keys=True, indent=4, separators=(',', ': ')))
 
 
 parser = argparse.ArgumentParser(description='polishing networks')

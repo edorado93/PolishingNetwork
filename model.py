@@ -10,7 +10,7 @@ class LSTM_LM(nn.Module):
                               batch_first=True, dropout=config.dropout_p, bidirectional=config.bidirectional)
         else:
             self.rnn = nn.LSTM(config.em_size, config.hidden_size, config.n_layers,
-                              batch_first=True, dropout=config.dropout_p, bidirectional=config.bidirectionals)
+                              batch_first=True, dropout=config.dropout_p, bidirectional=config.bidirectional)
 
         self.out = nn.Linear(2 * config.hidden_size if config.bidirectional else config.hidden_size, self.vocab_size)
 
